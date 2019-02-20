@@ -13,6 +13,7 @@ systemctl stop rstudio-server.service
 systemctl disable rstudio-server.service
 
 # Install the Singularity image
+# 20 Feb 2019: CentOS 7 EPEL repos provide Singularity 2.x
 mkdir -p /apps
 (
   cd /apps || exit
