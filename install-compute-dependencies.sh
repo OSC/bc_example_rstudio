@@ -2,7 +2,8 @@
 
 # Install easy repo dependencies
 yum-config-manager --add-repo https://turbovnc.org/pmwiki/uploads/Downloads/TurboVNC.repo
-yum install -y nc python-websockify singularity turbovnc
+yum install -y epel-release
+yum install -y nc python-websockify singularity turbovnc 
 
 # Install RStudio from RPM
 curl -L https://download2.rstudio.org/rstudio-server-rhel-1.1.463-x86_64.rpm -o rstudio-server-rhel-1.1.463-x86_64.rpm
