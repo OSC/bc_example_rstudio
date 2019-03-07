@@ -5,7 +5,7 @@ setup_env () {
   # Additional environment which could be moved into a module
   # Change these to suit
   export RSTUDIO_SERVER_IMAGE="/apps/rserver-launcher-centos7.simg"
-  export SINGULARITY_BINDPATH="/usr/lib,/usr/lib64,/bin,/usr/share,/usr/include"
+  export SINGULARITY_BINDPATH="/etc,/media,/mnt,/opt,/srv,/usr,/var"
   export PATH="$PATH:/usr/lib/rstudio-server/bin"
   export SINGULARITYENV_PATH="$PATH"
 }
