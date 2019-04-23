@@ -33,6 +33,8 @@ All Batch Connect apps also require the following on the compute nodes:
 
 If you have not already be sure to start with the section about setting up your system for [Batch Connect development](https://osc.github.io/ood-documentation/master/app-development/interactive/setup.html). Detailed installation instructions for this app are included in the [OnDemand documentation](https://osc.github.io/ood-documentation/master/app-development/tutorials-interactive-apps/add-rstudio.html).
 
+Note that this example assumes that the compute host is CentOS 7. In order to ensure correct behavior it is important that the guest is built from the same OS as the host (type and major version), this is because most of the host's system directories are bind-mounted into the guest.
+
 ## Contributing
 
 1. Fork it ( https://github.com/OSC/bc_example_rstudio/fork )
