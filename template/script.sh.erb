@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# source files if they exist
+src_if_exists () {
+  if [ -f "$1" ]; then
+    source "$1"
+  fi
+}
+
 # Load the required environment
 setup_env () {
   # Additional environment which could be moved into a module
@@ -8,7 +15,11 @@ setup_env () {
   export SINGULARITY_BINDPATH="/etc,/media,/mnt,/opt,/srv,/usr,/var"
   export PATH="$PATH:/usr/lib/rstudio-server/bin"
   export SINGULARITYENV_PATH="$PATH"
+
+  src_if_exists "$HOME/.Renviron"
+  src_if_exists "$HOME/.REnviron"
 }
+
 setup_env
 
 #
