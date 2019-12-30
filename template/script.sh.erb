@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
 
-# Load the required environment
-setup_env () {
-  # Additional environment which could be moved into a module
-  # Change these to suit
-  export RSTUDIO_SERVER_IMAGE="/apps/rserver-launcher-centos7.simg"
-  export SINGULARITY_BINDPATH="/etc,/media,/mnt,/opt,/srv,/usr,/var"
-  export PATH="$PATH:/usr/lib/rstudio-server/bin"
-  export SINGULARITYENV_PATH="$PATH"
-}
-setup_env
-
 #
 # Start RStudio Server
 #
 
+# PATH including rserver
+export PATH="$PATH:/usr/lib/rstudio-server/bin"
+
 # PAM auth helper used by RStudio
-export RSTUDIO_AUTH="${PWD}/bin/auth"
+export RSTUDIO_AUTH="<%= session.staged_root.join('bin/auth') %>"
 
 # Generate an `rsession` wrapper script
-export RSESSION_WRAPPER_FILE="${PWD}/rsession.sh"
+export RSESSION_WRAPPER_FILE="<%= session.staged_root.join('rsession.sh') %>"
 (
 umask 077
 sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
@@ -41,21 +33,58 @@ chmod 700 "${RSESSION_WRAPPER_FILE}"
 # Set working directory to home directory
 cd "${HOME}"
 
-export TMPDIR="$(mktemp -d)"
-
-mkdir -p "$TMPDIR/rstudio-server"
-python -c 'from uuid import uuid4; print(uuid4())' > "$TMPDIR/rstudio-server/secure-cookie-key"
-chmod 0600 "$TMPDIR/rstudio-server/secure-cookie-key"
-
 set -x
-# Launch the RStudio Server
-echo "Starting up rserver..."
 
-singularity run -B "$TMPDIR:/tmp" "$RSTUDIO_SERVER_IMAGE" \
- --www-port "${port}" \
+# Dump environment without functions for use in rsession.sh, filtering readonly variables
+(set -o posix; set) | grep -vP '^(BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID)' > "<%= session.staged_root.join('.env') %>"
+
+cat > "<%= session.staged_root.join('launcher.sh') %>"  << SCRIPT
+#!/bin/bash
+
+exec > <%= session.staged_root.join('unshared_log.log') %> 2>&1
+
+# Hide real /tmp
+# tmpfs does not pre-allocate memory so a large size is safe (tm)
+mount -n -o size=64M -t tmpfs tmpfs /tmp
+
+(
+  cd /tmp
+  mkdir -p "rstudio-server"
+  python -c 'from uuid import uuid4; print(uuid4())' > "rstudio-server/secure-cookie-key"
+  chmod 0600 "rstudio-server/secure-cookie-key"
+)
+
+echo "Contents of /tmp"
+tree /tmp
+echo "Starting rserver on port $port"
+
+# env | sort
+
+source "<%= session.staged_root.join('.env') %>"
+
+rserver --www-port "$port" \
  --auth-none 0 \
- --auth-pam-helper-path "${RSTUDIO_AUTH}" \
+ --auth-pam-helper-path "$RSTUDIO_AUTH" \
  --auth-encrypt-password 0 \
- --rsession-path "${RSESSION_WRAPPER_FILE}"
+ --rsession-path "$RSESSION_WRAPPER_FILE"
 
-echo 'Singularity as exited...'
+ps aux | sort
+
+# Get the PID of the last rserver process started
+rserver_pid=$( pgrep 'rserver' | tail )
+echo "PID: $rserver_pid"
+# As long as the PID directory exists we wait
+if [[ "/proc/$rserver_pid" != "/proc/" ]]; then
+  while [[ -d "/proc/$rserver_pid" ]]; do
+    echo "Waiting on $rserver_pid"
+    sleep 1
+  done
+else
+  echo "PID for rserver was not captured"
+fi
+SCRIPT
+
+# Launch the RStudio Server
+unshare -rmfp /bin/bash "<%= session.staged_root.join('launcher.sh') %>"
+
+echo 'RStudio has exited...'
