@@ -8,6 +8,9 @@ setup_env () {
   export SINGULARITY_BINDPATH="/etc,/media,/mnt,/opt,/srv,/usr,/var"
   export PATH="$PATH:/usr/lib/rstudio-server/bin"
   export SINGULARITYENV_PATH="$PATH"
+  # In Singularity 3.5.x it became necessary to explicitly pass LD_LIBRARY_PATH
+  # to the singularity process
+  export SINGULARITYENV_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 }
 setup_env
 
