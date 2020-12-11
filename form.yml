@@ -1,5 +1,5 @@
 ---
-cluster: "example"
+cluster: ""
 form:
   - bc_account
   - bc_queue
